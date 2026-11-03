@@ -105,7 +105,19 @@ a { color: inherit; }
 
 /* Первый экран */
 .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
-.hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  /* шестиугольники только справа, под текстом слева чистый фон */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, transparent 58%, #000 88%);
+  mask-image: linear-gradient(90deg, transparent 0, transparent 58%, #000 88%);
+}
+@media (max-width: 720px) {
+  /* на телефоне текст во всю ширину: лампы остаются узкой полосой «потолка» над текстом */
+  .hero canvas {
+    -webkit-mask-image: linear-gradient(180deg, #000 0, #000 18px, transparent 52px);
+    mask-image: linear-gradient(180deg, #000 0, #000 18px, transparent 52px);
+  }
+}
 .hero::after {
   content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(180deg, transparent 0%, transparent 45%, var(--bg) 100%);
@@ -274,11 +286,11 @@ select:focus, input:focus { border-color: var(--led); outline: none; box-shadow:
 
 .journal-day { font-weight: 600; }
 .jgrid-wrap { overflow-x: auto; }
-.jgrid { display: grid; grid-template-columns: 46px repeat(3, minmax(88px, 1fr)); grid-template-rows: 30px repeat(12, 34px); gap: 2px; font-size: 12px; min-width: 330px; }
+.jgrid { display: grid; grid-template-columns: 46px repeat(3, minmax(88px, 1fr)); grid-template-rows: 30px repeat(12, 40px); gap: 2px; font-size: 12px; min-width: 330px; }
 .jh { font-weight: 700; display: grid; place-items: center; color: var(--muted); font-size: 12px; }
 .jt { font-family: var(--font-num); color: var(--muted); display: flex; justify-content: flex-end; padding-right: 6px; font-size: 11px; }
 .jc { background: var(--surface-2); border-radius: 4px; }
-.jb { border-radius: 6px; padding: 5px 7px; font-size: 12px; line-height: 1.3; overflow: hidden; background: var(--busy); border-left: 3px solid var(--muted); z-index: 1; min-width: 0; }
+.jb { border-radius: 6px; padding: 4px 7px; font-size: 12px; line-height: 1.25; overflow: hidden; background: var(--busy); border-left: 3px solid var(--muted); z-index: 1; min-width: 0; }
 .jb b { display: block; font-weight: 600; }
 .jb.new { background: var(--led-soft); border-left-color: var(--led); animation: pop .5s ease-out; }
 @keyframes pop { from { transform: scale(.96); opacity: .4; } to { transform: none; opacity: 1; } }
@@ -348,6 +360,7 @@ footer .inner { padding-block: 24px 110px; }
   .svc-dur { grid-column: 1; grid-row: 2; justify-self: start; }
   .svc-row .link-btn { grid-column: 2; grid-row: 2; justify-self: end; }
   .top .btn-led { display: none; }
+  .hero-actions .btn { flex: 1 1 100%; }
 }
 </style>
 
@@ -687,13 +700,14 @@ footer .inner { padding-block: 24px 110px; }
   var extra = {};
   function bookings(di) {
     var d = days[di], rnd = seeded(d.getDate() * 31 + d.getMonth() * 7 + 3), list = [];
-    var labels = ["Мойка · Camry", "Химчистка · Solaris", "Полировка · X5", "Мойка · Polo", "Фары · Octavia", "Озонация · Rio"];
+    // подписи по длительности, чтобы в журнале не было «полировки за час»
+    var labels = { 1: ["Мойка · Camry", "Мойка · Polo", "Озонация · Rio"], 2: ["Свежесть · Kia Rio", "Свежесть · Golf"], 3: ["Фары · Octavia", "Фары · Tiguan"], 5: ["Химчистка · Solaris", "Химчистка · RAV4"] };
     for (var b = 0; b < BOXES; b++) {
       var t = OPEN + Math.floor(rnd() * 3);
       while (t < CLOSE - 1) {
         var len = [1, 1, 2, 3, 5][Math.floor(rnd() * 5)];
         if (t + len > CLOSE) break;
-        if (rnd() < 0.55) list.push({ box: b, start: t, dur: len, label: labels[Math.floor(rnd() * labels.length)] });
+        if (rnd() < 0.55) list.push({ box: b, start: t, dur: len, label: labels[len][Math.floor(rnd() * labels[len].length)] });
         t += len + Math.floor(rnd() * 2);
       }
     }
